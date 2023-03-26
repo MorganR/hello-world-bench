@@ -1,0 +1,16 @@
+[package]
+name = "hello-world-bench"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+approx = "0.5.1"
+clap = { version = "4.1.13", features = ["color", "derive", "error-context", "help", "std", "suggestions", "usage"] }
+csv = "1.2.1"
+futures = "0.3.27"
+lazy_static = "1.4.0"
+regex = "1.7.3"
+serde = "1.0.158"
+surf = "2.3.2"
