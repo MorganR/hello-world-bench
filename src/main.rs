@@ -14,6 +14,7 @@ use std::{
 use clap::Parser;
 
 mod docker;
+mod load;
 mod metrics;
 mod paths;
 mod single;
@@ -41,13 +42,18 @@ pub struct Cli {
     pub out_dir: String,
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
     let args = Cli::parse();
 
     let out_dir = prep_out_dir(args.out_dir)?;
 
     if args.single {
-        single::benchmark_all_single(&args.targets, out_dir, args.compress)?
+        single::benchmark_all(&args.targets, out_dir.clone(), args.compress)?;
+    }
+
+    if args.load {
+        load::benchmark_all(&args.targets, out_dir, args.compress).await?;
     }
 
     Ok(())

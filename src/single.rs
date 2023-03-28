@@ -39,7 +39,7 @@ fn bench_single<'a: 'c, 'b, 'c>(
 ) -> Result<SingleResult<'a, 'b>, Box<dyn Error>> {
     let full_path = format!("http://localhost:8080{}", &path.path);
     let out = Command::new("wrk")
-        .args(["-t", "1", "-c", "1", "-d", "30s", &full_path])
+        .args(["-t", "1", "-c", "1", "-d", "10s", &full_path])
         .output()?;
     if !out.status.success() {
         return Err(format!("Failed to run wrk; code: {:?}", out.status.code()).into());
@@ -51,7 +51,7 @@ fn bench_single<'a: 'c, 'b, 'c>(
 }
 
 /// Benchmarks each target, writing results to a CSV in out_dir.
-pub fn benchmark_all_single(
+pub fn benchmark_all(
     targets: &Vec<String>,
     out_dir: PathBuf,
     with_compression: bool,
@@ -61,10 +61,11 @@ pub fn benchmark_all_single(
     let mut single_benchmark_csv = csv::Writer::from_path(&single_benchmark_path)?;
 
     lazy_static! {
-        static ref TEST_PATHS: [TestPath; 8] = [
+        static ref TEST_PATHS: [TestPath; 9] = [
             TestPath::new("/strings/hello", "hello"),
             TestPath::new("/strings/hello?name=fluffy%20dog", "hello-param"),
             TestPath::new("/strings/hello?name=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "hello-long"),
+            TestPath::new("/strings/async-hello", "async-hello"),
             TestPath::new("/strings/lines?n=10000", "lines"),
             TestPath::new("/static/scout.webp", "static-img"),
             TestPath::new("/static/basic.html", "static-text"),

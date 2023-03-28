@@ -17,16 +17,20 @@ impl<'a> TestTarget<'a> {
         format!("hello-{}", self.server_name)
     }
 
-    /// Converts this target to a unique name
+    /// Converts this target to a unique name.
     pub fn name(&self) -> String {
         let compression = if self.is_compressed {
             "compressed"
         } else {
             "uncompressed"
         };
+        // Docker rejects container names with "/", so convert slashes to "-".
         format!(
             "{}-{}-cpus-{}-ram-{}m",
-            self.server_name, compression, self.num_cpus, self.ram_mb
+            self.server_name.replace("/", "-"),
+            compression,
+            self.num_cpus,
+            self.ram_mb
         )
     }
 }
