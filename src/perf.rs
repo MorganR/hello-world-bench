@@ -71,10 +71,13 @@ pub async fn benchmark_all<'a>(
         let name = docker::start_container(&target)?;
         docker::await_healthy().await;
 
+        println!("Starting performance benchmark on target {}", target.name());
         for path in TEST_PATHS.iter() {
+            println!("Benchmarking path {:?}", path);
             let result = bench_path(target.clone(), path)?;
             writes::write_perf_result(&mut benchmark_csv, result)?;
         }
+        println!("Finished performance benchmark on target {}", target.name());
 
         docker::kill_container(&name)?;
     }

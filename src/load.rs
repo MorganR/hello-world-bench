@@ -88,6 +88,8 @@ async fn bench_target(
         false => transaction!(configure_user_without_compression),
     };
 
+    println!("Starting load test against target {}", tt.name());
+
     GooseAttack::initialize_with_config(configuration)?
         .register_scenario(
             scenario!("LoadTest")
@@ -98,6 +100,8 @@ async fn bench_target(
         )
         .execute()
         .await?;
+
+    println!("Finished load test against target {}", tt.name());
 
     Ok(())
 }
@@ -115,21 +119,6 @@ pub async fn benchmark_all(
         target_dir.push(target.name());
         if !target_dir.exists() {
             tokio::fs::create_dir_all(&target_dir).await?;
-        } else {
-            // Clear the directory.
-            let mut contents = tokio::fs::read_dir(&target_dir).await?;
-            let mut deletes = Vec::new();
-            while let Some(f) = contents.next_entry().await? {
-                deletes.push(tokio::fs::remove_file(f.path()));
-            }
-            if let Some(err) = join_all(deletes)
-                .await
-                .into_iter()
-                .filter(|r| r.is_err())
-                .last()
-            {
-                err?;
-            }
         }
 
         for i in 1..=2 {

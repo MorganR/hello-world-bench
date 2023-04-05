@@ -96,13 +96,15 @@ pub async fn benchmark_all<'a>(
     for target in targets {
         let mut results = WarmUpResults::new(target.clone());
         for path in TEST_PATHS.iter() {
-            for _ in 0..3 {
+            for i in 0..3 {
                 let name = docker::start_container(&target)?;
 
                 let result = bench_path(path, Instant::now()).await?;
                 results.per_path.push(result);
 
                 docker::kill_container(&name)?;
+                let last_result = results.per_path.last().unwrap();
+                println!("Benchmarked warm-up {} on path {:?}.\n\tStartup: {:?}\n\tLatencies: {:?}", i, last_result.path, last_result.startup_time, last_result.latencies);
             }
         }
         writes::write_warm_up_request_results(&mut requests_csv, &results)?;
