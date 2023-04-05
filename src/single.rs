@@ -4,7 +4,7 @@ use crate::{
     docker,
     metrics::Metric,
     paths::TestPath,
-    targets::{self, TestTarget},
+    targets::TestTarget,
     writes,
 };
 
@@ -51,11 +51,7 @@ fn bench_single<'a: 'c, 'b, 'c>(
 }
 
 /// Benchmarks each target, writing results to a CSV in out_dir.
-pub fn benchmark_all(
-    targets: &Vec<String>,
-    out_dir: PathBuf,
-    with_compression: bool,
-) -> Result<(), Box<dyn Error>> {
+pub fn benchmark_all(targets: &Vec<TestTarget>, out_dir: PathBuf) -> Result<(), Box<dyn Error>> {
     let mut single_benchmark_path = out_dir;
     single_benchmark_path.push("single-benchmarks.csv");
     let mut single_benchmark_csv = csv::Writer::from_path(&single_benchmark_path)?;
@@ -75,16 +71,10 @@ pub fn benchmark_all(
     }
 
     for target in targets {
-        let tt = targets::TestTarget {
-            server_name: target,
-            num_cpus: 1,
-            ram_mb: 128,
-            is_compressed: with_compression,
-        };
-        let name = docker::start_container(&tt)?;
+        let name = docker::start_container(&target)?;
 
         for path in TEST_PATHS.iter() {
-            let result = bench_single(tt.clone(), path)?;
+            let result = bench_single(target.clone(), path)?;
             writes::write_single_result(&mut single_benchmark_csv, result)?;
         }
 

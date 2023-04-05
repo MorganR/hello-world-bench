@@ -77,8 +77,8 @@ async fn bench_target(
     let mut configuration = GooseConfiguration::default();
     configuration.host = "http://localhost:8080".to_string();
     configuration.users = Some(6);
-    configuration.startup_time = "120s".to_string();
-    configuration.run_time = "20s".to_string();
+    configuration.startup_time = "60s".to_string();
+    configuration.run_time = "10s".to_string();
     configuration.report_file = report_log_path(out_dir.clone(), iteration);
     configuration.request_log = request_log_path(out_dir, iteration);
     configuration.request_format = Some(REQUEST_LOG_FORMAT);
@@ -104,21 +104,14 @@ async fn bench_target(
 
 /// Benchmarks each target with a load test, producing an HTML report and requests CSV for each iteration.
 pub async fn benchmark_all(
-    targets: &Vec<String>,
+    targets: &Vec<TestTarget<'_>>,
     out_dir: PathBuf,
-    with_compression: bool,
 ) -> Result<(), Box<dyn Error>> {
     for target in targets {
-        let tt = TestTarget {
-            server_name: target,
-            num_cpus: 1,
-            ram_mb: 128,
-            is_compressed: with_compression,
-        };
-        let name = docker::start_container(&tt)?;
+        let name = docker::start_container(target)?;
 
         let mut target_dir = out_dir.clone();
-        target_dir.push(tt.name());
+        target_dir.push(target.name());
         if !target_dir.exists() {
             tokio::fs::create_dir_all(&target_dir).await?;
         } else {
@@ -139,7 +132,7 @@ pub async fn benchmark_all(
         }
 
         for i in 1..=2 {
-            bench_target(&tt, target_dir.clone(), i).await?;
+            bench_target(target, target_dir.clone(), i).await?;
             tokio::time::sleep(Duration::from_secs(5)).await;
         }
 
