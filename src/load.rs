@@ -1,6 +1,5 @@
 use std::{error::Error, path::PathBuf, time::Duration};
 
-use futures::future::join_all;
 use goose::{config::GooseConfiguration, logger::GooseLogFormat, prelude::*};
 
 use crate::{docker, targets::TestTarget};
@@ -121,7 +120,7 @@ pub async fn benchmark_all(
             tokio::fs::create_dir_all(&target_dir).await?;
         }
 
-        for i in 1..=2 {
+        for i in 1..=3 {
             bench_target(target, target_dir.clone(), i).await?;
             tokio::time::sleep(Duration::from_secs(5)).await;
         }
