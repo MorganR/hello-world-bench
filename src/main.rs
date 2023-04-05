@@ -20,6 +20,7 @@ mod metrics;
 mod paths;
 mod perf;
 mod targets;
+mod warm_up;
 mod writes;
 
 /// Runs benchmarks for specified hello-world servers.
@@ -38,11 +39,14 @@ pub struct Cli {
     /// If specified, runs load tests.
     #[arg(long)]
     pub load: bool,
+    /// If specified, runs a warm-up benchmark.
+    #[arg(long)]
+    pub warm_up: bool,
     /// Where to write the output data.
     #[arg(short, long)]
     pub out_dir: String,
     /// The number of CPUs to run the image with.
-    #[arg(long, default_value="1")]
+    #[arg(long, default_value = "1")]
     pub num_cpus: usize,
 }
 
@@ -66,7 +70,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         let mut perf_dir = out_dir.clone();
         perf_dir.push("perf");
         prep_out_dir(perf_dir.to_str().unwrap())?;
-        perf::benchmark_all(&targets, perf_dir)?;
+        perf::benchmark_all(&targets, perf_dir).await?;
     }
 
     if args.load {
@@ -74,6 +78,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
         load_dir.push("load");
         prep_out_dir(load_dir.to_str().unwrap())?;
         load::benchmark_all(&targets, load_dir).await?;
+    }
+
+    if args.warm_up {
+        let mut warm_dir = out_dir.clone();
+        warm_dir.push("warm_up");
+        prep_out_dir(warm_dir.to_str().unwrap())?;
+        warm_up::benchmark_all(&targets, warm_dir).await?;
     }
 
     Ok(())

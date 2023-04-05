@@ -4,6 +4,7 @@ use std::time::Duration;
 
 use crate::metrics::{Metric, MetricData};
 use crate::perf::PerfResult;
+use crate::warm_up::WarmUpResults;
 
 #[derive(serde::Serialize)]
 struct LatencyRow {
@@ -75,10 +76,98 @@ impl<'a: 'c, 'b: 'c, 'c> From<PerfResult<'a, 'b>> for PerfResultRow<'c> {
     }
 }
 
+#[derive(serde::Serialize)]
+struct WarmUpRequestRow<'a> {
+    name: &'a str,
+    path: &'a str,
+    server_name: &'a str,
+    num_cpus: usize,
+    ram_mb: usize,
+    target: String,
+    request_number: usize,
+    latency_ms: f64,
+}
+
+impl<'a: 'c, 'b: 'c, 'c> From<&WarmUpResults<'a, 'b>> for Vec<WarmUpRequestRow<'c>> {
+    fn from(result: &WarmUpResults<'a, 'b>) -> Self {
+        result
+            .per_path
+            .iter()
+            .flat_map(|path_result| {
+                path_result
+                    .latencies
+                    .iter()
+                    .enumerate()
+                    .map(|(i, duration)| WarmUpRequestRow {
+                        name: &path_result.path.name,
+                        path: &path_result.path.path,
+                        server_name: result.target.server_name,
+                        num_cpus: result.target.num_cpus,
+                        ram_mb: result.target.ram_mb,
+                        target: result.target.name(),
+                        request_number: i + 1,
+                        latency_ms: (duration.as_nanos() as f64) / 1_000_000.0,
+                    })
+            })
+            .collect()
+    }
+}
+
+#[derive(serde::Serialize)]
+struct ServerStartRow<'a> {
+    name: &'a str,
+    path: &'a str,
+    server_name: &'a str,
+    num_cpus: usize,
+    ram_mb: usize,
+    target: String,
+    start_up_latency_ms: f64,
+}
+
+impl<'a: 'c, 'b: 'c, 'c> From<&WarmUpResults<'a, 'b>> for Vec<ServerStartRow<'c>> {
+    fn from(result: &WarmUpResults<'a, 'b>) -> Self {
+        result
+            .per_path
+            .iter()
+            .map(|path_result| ServerStartRow {
+                name: &path_result.path.name,
+                path: &path_result.path.path,
+                server_name: result.target.server_name,
+                num_cpus: result.target.num_cpus,
+                ram_mb: result.target.ram_mb,
+                target: result.target.name(),
+                start_up_latency_ms: (path_result.startup_time.as_nanos() as f64) / 1_000_000.0,
+            })
+            .collect()
+    }
+}
+
 pub fn write_perf_result<W: Write>(
     writer: &mut csv::Writer<W>,
     result: PerfResult,
 ) -> Result<(), Box<dyn Error>> {
     writer.serialize(PerfResultRow::from(result))?;
+    Ok(())
+}
+
+pub fn write_warm_up_request_results<W: Write>(
+    writer: &mut csv::Writer<W>,
+    results: &WarmUpResults,
+) -> Result<(), Box<dyn Error>> {
+    let rows: Vec<WarmUpRequestRow> = results.into();
+    rows.iter()
+        .map(|row| writer.serialize(row))
+        .collect::<Result<_, csv::Error>>()?;
+    Ok(())
+}
+
+pub fn write_warm_up_start_time_results<W: Write>(
+    writer: &mut csv::Writer<W>,
+    results: &WarmUpResults,
+) -> Result<(), Box<dyn Error>> {
+    let rows: Vec<ServerStartRow> = results.into();
+    rows.iter()
+        .map(|row| writer.serialize(row))
+        .collect::<Result<_, csv::Error>>()?;
     Ok(())
 }

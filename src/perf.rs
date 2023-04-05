@@ -1,12 +1,6 @@
 use std::{error::Error, path::PathBuf, process::Command};
 
-use crate::{
-    docker,
-    metrics::Metric,
-    paths::TestPath,
-    targets::TestTarget,
-    writes,
-};
+use crate::{docker, metrics::Metric, paths::TestPath, targets::TestTarget, writes};
 
 #[derive(Debug)]
 pub struct PerfResult<'a, 'b> {
@@ -51,7 +45,10 @@ fn bench_path<'a: 'c, 'b, 'c>(
 }
 
 /// Benchmarks each target, writing results to a CSV in out_dir.
-pub fn benchmark_all(targets: &Vec<TestTarget>, out_dir: PathBuf) -> Result<(), Box<dyn Error>> {
+pub async fn benchmark_all<'a>(
+    targets: &Vec<TestTarget<'a>>,
+    out_dir: PathBuf,
+) -> Result<(), Box<dyn Error>> {
     let mut perf_benchmark_path = out_dir;
     perf_benchmark_path.push("benchmarks.csv");
     let mut benchmark_csv = csv::Writer::from_path(&perf_benchmark_path)?;
@@ -72,6 +69,7 @@ pub fn benchmark_all(targets: &Vec<TestTarget>, out_dir: PathBuf) -> Result<(), 
 
     for target in targets {
         let name = docker::start_container(&target)?;
+        docker::await_healthy().await;
 
         for path in TEST_PATHS.iter() {
             let result = bench_path(target.clone(), path)?;

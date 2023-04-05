@@ -109,6 +109,7 @@ pub async fn benchmark_all(
 ) -> Result<(), Box<dyn Error>> {
     for target in targets {
         let name = docker::start_container(target)?;
+        docker::await_healthy().await;
 
         let mut target_dir = out_dir.clone();
         target_dir.push(target.name());

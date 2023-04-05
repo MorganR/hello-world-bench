@@ -1,7 +1,5 @@
 use std::{io::Error, process::Command};
 
-use surf::StatusCode;
-
 use crate::targets::TestTarget;
 
 pub fn start_container(target: &TestTarget) -> Result<String, Error> {
@@ -30,19 +28,21 @@ pub fn start_container(target: &TestTarget) -> Result<String, Error> {
         ])
         .spawn()?;
 
+    Ok(name)
+}
+
+pub async fn await_healthy() {
     println!("Polling until healthy");
     loop {
-        let hello = futures::executor::block_on(surf::get("http://localhost:8080/strings/hello"));
+        let hello = reqwest::get("http://localhost:8080/strings/hello").await;
         if match hello {
-            Ok(r) => r.status() == StatusCode::Ok,
+            Ok(r) => r.status().is_success(),
             _ => false,
         } {
             break;
         }
     }
     println!("Container is ready");
-
-    Ok(name)
 }
 
 pub fn kill_container(name: &str) -> Result<(), Error> {
