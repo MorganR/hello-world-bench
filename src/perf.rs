@@ -9,15 +9,15 @@ use crate::{
 };
 
 #[derive(Debug)]
-pub struct SingleResult<'a, 'b> {
+pub struct PerfResult<'a, 'b> {
     pub target: TestTarget<'b>,
     pub path: &'a TestPath,
     pub metrics: Vec<Metric>,
 }
 
-impl<'a, 'b> SingleResult<'a, 'b> {
+impl<'a, 'b> PerfResult<'a, 'b> {
     fn new<'c: 'a>(target: TestTarget<'b>, path: &'c TestPath) -> Self {
-        SingleResult {
+        PerfResult {
             target: target,
             path: path,
             metrics: vec![],
@@ -33,10 +33,10 @@ impl<'a, 'b> SingleResult<'a, 'b> {
     }
 }
 
-fn bench_single<'a: 'c, 'b, 'c>(
+fn bench_path<'a: 'c, 'b, 'c>(
     target: TestTarget<'b>,
     path: &'a TestPath,
-) -> Result<SingleResult<'a, 'b>, Box<dyn Error>> {
+) -> Result<PerfResult<'a, 'b>, Box<dyn Error>> {
     let full_path = format!("http://localhost:8080{}", &path.path);
     let out = Command::new("wrk")
         .args(["-t", "1", "-c", "1", "-d", "10s", &full_path])
@@ -44,7 +44,7 @@ fn bench_single<'a: 'c, 'b, 'c>(
     if !out.status.success() {
         return Err(format!("Failed to run wrk; code: {:?}", out.status.code()).into());
     }
-    let mut result = SingleResult::new(target, path);
+    let mut result = PerfResult::new(target, path);
     result.push_wrk_results(out.stdout);
 
     Ok(result)
@@ -52,9 +52,9 @@ fn bench_single<'a: 'c, 'b, 'c>(
 
 /// Benchmarks each target, writing results to a CSV in out_dir.
 pub fn benchmark_all(targets: &Vec<TestTarget>, out_dir: PathBuf) -> Result<(), Box<dyn Error>> {
-    let mut single_benchmark_path = out_dir;
-    single_benchmark_path.push("single-benchmarks.csv");
-    let mut single_benchmark_csv = csv::Writer::from_path(&single_benchmark_path)?;
+    let mut perf_benchmark_path = out_dir;
+    perf_benchmark_path.push("benchmarks.csv");
+    let mut benchmark_csv = csv::Writer::from_path(&perf_benchmark_path)?;
 
     lazy_static! {
         static ref TEST_PATHS: [TestPath; 9] = [
@@ -74,8 +74,8 @@ pub fn benchmark_all(targets: &Vec<TestTarget>, out_dir: PathBuf) -> Result<(), 
         let name = docker::start_container(&target)?;
 
         for path in TEST_PATHS.iter() {
-            let result = bench_single(target.clone(), path)?;
-            writes::write_single_result(&mut single_benchmark_csv, result)?;
+            let result = bench_path(target.clone(), path)?;
+            writes::write_perf_result(&mut benchmark_csv, result)?;
         }
 
         docker::kill_container(&name)?;

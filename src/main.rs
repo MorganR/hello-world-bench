@@ -18,7 +18,7 @@ mod docker;
 mod load;
 mod metrics;
 mod paths;
-mod single;
+mod perf;
 mod targets;
 mod writes;
 
@@ -32,9 +32,9 @@ pub struct Cli {
     ///If specified, tests results with compression enabled.
     #[arg(long)]
     pub compress: bool,
-    /// If specified, runs single-request benchmarks.
+    /// If specified, runs performance benchmarks for individual requests.
     #[arg(long)]
-    pub single: bool,
+    pub perf: bool,
     /// If specified, runs load tests.
     #[arg(long)]
     pub load: bool,
@@ -62,11 +62,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
         })
         .collect();
 
-    if args.single {
-        let mut single_dir = out_dir.clone();
-        single_dir.push("single");
-        prep_out_dir(single_dir.to_str().unwrap())?;
-        single::benchmark_all(&targets, single_dir)?;
+    if args.perf {
+        let mut perf_dir = out_dir.clone();
+        perf_dir.push("perf");
+        prep_out_dir(perf_dir.to_str().unwrap())?;
+        perf::benchmark_all(&targets, perf_dir)?;
     }
 
     if args.load {

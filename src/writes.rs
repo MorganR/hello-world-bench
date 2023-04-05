@@ -3,7 +3,7 @@ use std::io::Write;
 use std::time::Duration;
 
 use crate::metrics::{Metric, MetricData};
-use crate::single::SingleResult;
+use crate::perf::PerfResult;
 
 #[derive(serde::Serialize)]
 struct LatencyRow {
@@ -23,7 +23,7 @@ impl From<&MetricData<Duration>> for LatencyRow {
 }
 
 #[derive(serde::Serialize)]
-struct SingleResultRow<'a> {
+struct PerfResultRow<'a> {
     name: &'a str,
     path: &'a str,
     server_name: &'a str,
@@ -38,8 +38,8 @@ struct SingleResultRow<'a> {
     qps_max: f64,
 }
 
-impl<'a: 'c, 'b: 'c, 'c> From<SingleResult<'a, 'b>> for SingleResultRow<'c> {
-    fn from(result: SingleResult<'a, 'b>) -> Self {
+impl<'a: 'c, 'b: 'c, 'c> From<PerfResult<'a, 'b>> for PerfResultRow<'c> {
+    fn from(result: PerfResult<'a, 'b>) -> Self {
         let latency_metric = result
             .metrics
             .iter()
@@ -58,7 +58,7 @@ impl<'a: 'c, 'b: 'c, 'c> From<SingleResult<'a, 'b>> for SingleResultRow<'c> {
             Metric::Qps(data) => data.clone(),
             _ => panic!("Impossible"),
         };
-        SingleResultRow {
+        PerfResultRow {
             name: &result.path.name,
             path: &result.path.path,
             server_name: result.target.server_name,
@@ -75,10 +75,10 @@ impl<'a: 'c, 'b: 'c, 'c> From<SingleResult<'a, 'b>> for SingleResultRow<'c> {
     }
 }
 
-pub fn write_single_result<W: Write>(
+pub fn write_perf_result<W: Write>(
     writer: &mut csv::Writer<W>,
-    result: SingleResult,
+    result: PerfResult,
 ) -> Result<(), Box<dyn Error>> {
-    writer.serialize(SingleResultRow::from(result))?;
+    writer.serialize(PerfResultRow::from(result))?;
     Ok(())
 }
