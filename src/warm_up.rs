@@ -42,12 +42,16 @@ async fn bench_path<'a: 'c, 'b, 'c>(
     path: &'a TestPath,
     start_time: Instant,
 ) -> Result<WarmUpResult<'a>, Box<dyn Error>> {
+    let client = reqwest::Client::builder()
+        .connect_timeout(Duration::from_millis(10))
+        .timeout(Duration::from_secs(1))
+        .build()?;
     let full_path = format!("http://localhost:8080{}", &path.path);
-    let mut result = wait_for_first_response(path, &full_path, start_time).await;
+    let mut result = wait_for_first_response(path, &full_path, start_time, &client).await;
 
     for _ in 0..5 {
         let req_time = Instant::now();
-        let _ = reqwest::get(&full_path).await?;
+        let _ = client.get(&full_path).send().await;
         let duration = req_time.elapsed();
         result.latencies.push(duration);
     }
@@ -59,10 +63,11 @@ async fn wait_for_first_response<'a>(
     path: &'a TestPath,
     full_path: &str,
     start_time: Instant,
+    client: &reqwest::Client,
 ) -> WarmUpResult<'a> {
     loop {
         let req_time = Instant::now();
-        let resp = reqwest::get(full_path).await;
+        let resp = client.get(full_path).send().await;
         if resp.is_ok() && resp.unwrap().status().is_success() {
             let duration = req_time.elapsed();
             let mut result = WarmUpResult::new(path, req_time.duration_since(start_time));
@@ -89,7 +94,7 @@ pub async fn benchmark_all<'a>(
             TestPath::new("/strings/hello", "hello"),
             TestPath::new("/strings/lines?n=10000", "lines"),
             TestPath::new("/static/basic.html", "static-text"),
-            TestPath::new("/math/power-reciprocals-alt?n=1000000", "math-powers")
+            TestPath::new("/math/power-reciprocals-alt?n=1000000", "powers-sum")
         ];
     }
 
@@ -104,7 +109,10 @@ pub async fn benchmark_all<'a>(
 
                 docker::kill_container(&name)?;
                 let last_result = results.per_path.last().unwrap();
-                println!("Benchmarked warm-up {} on path {:?}.\n\tStartup: {:?}\n\tLatencies: {:?}", i, last_result.path, last_result.startup_time, last_result.latencies);
+                println!(
+                    "Benchmarked warm-up {} on path {:?}.\n\tStartup: {:?}\n\tLatencies: {:?}",
+                    i, last_result.path, last_result.startup_time, last_result.latencies
+                );
             }
         }
         writes::write_warm_up_request_results(&mut requests_csv, &results)?;
