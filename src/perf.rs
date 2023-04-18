@@ -1,4 +1,4 @@
-use std::{error::Error, path::PathBuf, process::Command};
+use std::{error::Error, path::PathBuf, process::Command, io};
 
 use crate::{docker, metrics::Metric, paths::TestPath, targets::TestTarget, writes};
 
@@ -27,11 +27,21 @@ impl<'a, 'b> PerfResult<'a, 'b> {
     }
 }
 
+fn warm_up(path: &str) -> io::Result<()>{
+    Command::new("wrk")
+        .args(["-t", "1", "-c", "1", "-d", "1s", &path])
+        .output()?;
+    Ok(())
+}
+
 fn bench_path<'a: 'c, 'b, 'c>(
     target: TestTarget<'b>,
     path: &'a TestPath,
 ) -> Result<PerfResult<'a, 'b>, Box<dyn Error>> {
     let full_path = format!("http://localhost:8080{}", &path.path);
+
+    warm_up(&full_path)?;
+
     let out = Command::new("wrk")
         .args(["-t", "1", "-c", "1", "-d", "10s", &full_path])
         .output()?;
