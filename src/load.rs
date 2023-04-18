@@ -21,6 +21,7 @@ async fn configure_user_with_compression(user: &mut GooseUser) -> TransactionRes
     let builder = reqwest::Client::builder()
         .user_agent(APP_USER_AGENT)
         .gzip(true)
+        .brotli(true)
         .timeout(Duration::from_secs(10));
     user.set_client_builder(builder).await?;
     Ok(())
