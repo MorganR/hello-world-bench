@@ -35,7 +35,7 @@ async fn loadtest_strings(user: &mut GooseUser) -> TransactionResult {
     let _goose_metrics = user
         .get_named("/strings/async-hello", "async-hello")
         .await?;
-    let _goose_metrics = user.get_named("/strings/lines?n=50000", "lines").await?;
+    let _goose_metrics = user.get_named("/strings/lines?n=10000", "lines").await?;
 
     Ok(())
 }
@@ -123,6 +123,11 @@ pub async fn benchmark_all(
         for i in 1..=3 {
             bench_target(target, target_dir.clone(), i).await?;
             tokio::time::sleep(Duration::from_secs(5)).await;
+            if !docker::is_healthy().await {
+                docker::kill_container(&name).unwrap_or(());
+                docker::start_container(target)?;
+                docker::await_healthy().await;
+            }
         }
 
         docker::kill_container(&name)?;

@@ -31,14 +31,18 @@ pub fn start_container(target: &TestTarget) -> Result<String, Error> {
     Ok(name)
 }
 
+pub async fn is_healthy() -> bool {
+    let hello = reqwest::get("http://localhost:8080/strings/hello").await;
+    match hello {
+        Ok(r) => r.status().is_success(),
+        _ => false,
+    }
+}
+
 pub async fn await_healthy() {
     println!("Polling until healthy");
     loop {
-        let hello = reqwest::get("http://localhost:8080/strings/hello").await;
-        if match hello {
-            Ok(r) => r.status().is_success(),
-            _ => false,
-        } {
+        if is_healthy().await {
             break;
         }
     }
