@@ -39,19 +39,24 @@ impl<'a> WarmUpResult<'a> {
 }
 
 async fn bench_path<'a: 'c, 'b, 'c>(
+    target: &'_ TestTarget<'_>,
     path: &'a TestPath,
     start_time: Instant,
 ) -> Result<WarmUpResult<'a>, Box<dyn Error>> {
-    let client = reqwest::Client::builder()
+    let mut client_builder = reqwest::Client::builder()
         .connect_timeout(Duration::from_millis(10))
         .timeout(Duration::from_secs(1))
-        .build()?;
+        .gzip(target.is_compressed);
+    if !target.is_compressed {
+        client_builder = client_builder.no_brotli();
+    }
+    let client = client_builder.build()?;
     let full_path = format!("http://localhost:8080{}", &path.path);
     let mut result = wait_for_first_response(path, &full_path, start_time, &client).await;
 
     for _ in 0..5 {
         let req_time = Instant::now();
-        let _ = client.get(&full_path).send().await;
+        let _ = client.get(&full_path).send().await?;
         let duration = req_time.elapsed();
         result.latencies.push(duration);
     }
@@ -99,12 +104,13 @@ pub async fn benchmark_all<'a>(
     }
 
     for target in targets {
+        println!("Benchmarking warm up for {:?}", target);
         let mut results = WarmUpResults::new(target.clone());
         for path in TEST_PATHS.iter() {
             for i in 0..3 {
                 let name = docker::start_container(&target)?;
 
-                let result = bench_path(path, Instant::now()).await?;
+                let result = bench_path(target, path, Instant::now()).await?;
                 results.per_path.push(result);
 
                 docker::kill_container(&name)?;
