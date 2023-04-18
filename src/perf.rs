@@ -70,7 +70,7 @@ pub async fn benchmark_all<'a>(
             TestPath::new("/strings/hello?name=fluffy%20dog", "hello-param"),
             TestPath::new("/strings/hello?name=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "hello-long"),
             TestPath::new("/strings/async-hello", "async-hello"),
-            TestPath::new("/strings/lines?n=10000", "lines"),
+            TestPath::new("/strings/lines?n=50000", "lines"),
             TestPath::new("/static/scout.webp", "static-img"),
             TestPath::new("/static/basic.html", "static-text"),
             TestPath::new("/math/power-reciprocals-alt?n=10000", "math-powers-light"),
