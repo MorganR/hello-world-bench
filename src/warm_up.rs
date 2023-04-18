@@ -92,7 +92,7 @@ pub async fn benchmark_all<'a>(
     lazy_static! {
         static ref TEST_PATHS: [TestPath; 4] = [
             TestPath::new("/strings/hello", "hello"),
-            TestPath::new("/strings/lines?n=10000", "lines"),
+            TestPath::new("/strings/lines?n=50000", "lines"),
             TestPath::new("/static/basic.html", "static-text"),
             TestPath::new("/math/power-reciprocals-alt?n=1000000", "powers-sum")
         ];
