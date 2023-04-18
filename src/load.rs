@@ -28,9 +28,6 @@ async fn configure_user_with_compression(user: &mut GooseUser) -> TransactionRes
 
 async fn loadtest_strings(user: &mut GooseUser) -> TransactionResult {
     let _goose_metrics = user.get_named("/strings/hello", "hello").await?;
-    let _goose_metrics = user
-        .get_named("/strings/hello?name=cool%20gal", "hello-param")
-        .await?;
     let _goose_metrics = user.get_named("/strings/hello?name=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "hello-long").await?;
     let _goose_metrics = user
         .get_named("/strings/async-hello", "async-hello")
