@@ -16,9 +16,9 @@ struct LatencyRow {
 impl From<&MetricData<Duration>> for LatencyRow {
     fn from(data: &MetricData<Duration>) -> Self {
         LatencyRow {
-            mean_ms: data.mean.as_secs_f64() * 0.001,
-            std_dev_ms: data.std_dev.as_secs_f64() * 0.001,
-            max_ms: data.max.as_secs_f64() * 0.001,
+            mean_ms: data.mean.as_secs_f64() * 1000.0,
+            std_dev_ms: data.std_dev.as_secs_f64() * 1000.0,
+            max_ms: data.max.as_secs_f64() * 1000.0,
         }
     }
 }
@@ -106,7 +106,7 @@ impl<'a: 'c, 'b: 'c, 'c> From<&WarmUpResults<'a, 'b>> for Vec<WarmUpRequestRow<'
                         ram_mb: result.target.ram_mb,
                         target: result.target.name(),
                         request_number: i + 1,
-                        latency_ms: (duration.as_nanos() as f64) / 1_000_000.0,
+                        latency_ms: duration.as_secs_f64() * 1000.0,
                     })
             })
             .collect()
@@ -136,7 +136,7 @@ impl<'a: 'c, 'b: 'c, 'c> From<&WarmUpResults<'a, 'b>> for Vec<ServerStartRow<'c>
                 num_cpus: result.target.num_cpus,
                 ram_mb: result.target.ram_mb,
                 target: result.target.name(),
-                start_up_latency_ms: (path_result.startup_time.as_nanos() as f64) / 1_000_000.0,
+                start_up_latency_ms: path_result.startup_time.as_secs_f64() * 1000.0,
             })
             .collect()
     }

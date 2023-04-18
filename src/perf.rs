@@ -50,6 +50,7 @@ fn bench_path<'a: 'c, 'b, 'c>(
     }
     let mut result = PerfResult::new(target, path);
     result.push_wrk_results(out.stdout);
+    println!("\tLatency: {:?}", result.metrics.iter().find(|m| matches!(m, Metric::Latency(_))).unwrap());
 
     Ok(result)
 }
